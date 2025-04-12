@@ -115,7 +115,8 @@ async def init_db():
                           videos TEXT,
                           video_index INTEGER,
                           current_criterion INTEGER,
-                          current_score TEXT)''')
+                          current_score TEXT,
+                          waiting_for_best_reason BOOLEAN)''')
         
         await db.execute('''CREATE TABLE IF NOT EXISTS completed_themes (
                           user_id INTEGER,
@@ -166,6 +167,7 @@ async def start(update: Update, context: CallbackContext) -> None:
     # Проверяем незавершенную сессию
     progress = await get_progress(user_id)
     if progress:
+        await update.message.reply_text("🔍 Восстанавливаем вашу сессию...")
         await continue_progress(update, context, progress)
         return
     
@@ -361,14 +363,15 @@ async def save_progress(data: dict, user_id: int):
                 await db.execute("DELETE FROM progress WHERE user_id = ?", (user_id,))
                 # Добавляем новый
                 await db.execute(
-                    "INSERT INTO progress VALUES (?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO progress VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (
                         user_id,
                         data['current_theme'],
                         json.dumps(data['videos']),
                         data['video_index'],
                         data['current_criterion'],
-                        json.dumps(data['current_score'])
+                        json.dumps(data.get('current_score', {})),
+                        data.get('waiting_for_best_reason', False)
                     )
                 )
                 await db.commit()
@@ -387,7 +390,8 @@ async def get_progress(user_id: int) -> dict:
                 'videos': json.loads(row[2]),
                 'video_index': row[3],
                 'current_criterion': row[4],
-                'current_score': json.loads(row[5])
+                'current_score': json.loads(row[5]),
+                'waiting_for_best_reason': bool(row[6])
             } if row else None
     except Exception as e:
         logging.error(f"Get progress error: {e}")
@@ -433,10 +437,16 @@ async def continue_progress(update: Update, context: CallbackContext, progress: 
             "videos": progress["videos"],
             "video_index": progress["video_index"],
             "current_criterion": progress["current_criterion"],
-            "current_score": progress.get("current_score", {}),
-            "waiting_for_best_reason": progress.get("waiting_for_best_reason", False)
+            "current_score": progress["current_score"],
+            "waiting_for_best_reason": progress["waiting_for_best_reason"]
         })
 
+
+        # Если сессия была на этапе ввода причины
+        if data.get('waiting_for_best_reason'):
+            await update.effective_chat.send_message("🔄 Восстанавливаем сессию: Введите причину своего выбора еще раз...")
+            return
+        
         # Если сессия была на этапе выбора лучшего видео
         if data["video_index"] >= len(data["videos"]):
             # Если сессия была прервана НА ЭТАПЕ ВЫБОРА ЛУЧШЕГО ВИДЕО
@@ -444,11 +454,6 @@ async def continue_progress(update: Update, context: CallbackContext, progress: 
                 "🔄 Восстанавливаем сессию: Выбор лучшего видео"
             )
             await ask_favorite_video(update, context)  # Отправляем НОВЫЕ кнопки
-            return
-
-        # Если сессия была на этапе ввода причины
-        if data.get('waiting_for_best_reason'):
-            await update.effective_chat.send_message("Продолжаем ввод причины...")
             return
 
         # Восстанавливаем видео и критерий
@@ -477,8 +482,12 @@ async def handle_favorite_video(update: Update, context: CallbackContext) -> Non
         data = context.user_data
         
         if 'videos' not in data or not data['videos']:
+            # Восстанавливаем прогресс из БД
+            progress = await get_progress(query.from_user.id)
+            if progress:
+                await continue_progress(update, context, progress)
+                return
             await query.message.reply_text("❌ Сессия устарела. Начните заново с /start.")
-            await clear_progress(query.from_user.id)
             return
 
         best_idx = int(query.data.split('-')[1])
@@ -503,34 +512,35 @@ async def handle_favorite_video(update: Update, context: CallbackContext) -> Non
         await save_progress(data, query.from_user.id)
         await query.message.reply_text(
             "Почему вам показалось это видео самым удачным?\n"
-            "Введите ваш ответ сообщением в чат."
+            "Введите ваш ответ сообщением в чат.\n\n"
+            "(после отправки причины должно появиться сообщение о сохранении, если этого не произошло нажмите /start)"
         )
 
     except BadRequest as e:
         if "Query is too old" in str(e):
-            # Удаляем устаревшие кнопки и предлагаем начать заново
+            # Сохраняем текущее состояние
+            await save_progress(data, query.from_user.id)
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
                 text="🕒 Сессия устарела. Для продолжения нажмите /start"
             )
-            await clear_progress(query.from_user.id)
-            context.user_data.clear()
         else:
             logger.error(f"BadRequest: {e}")
 
     except Exception as e:
         logger.error(f"Favorite video error: {e}")
-        await clear_progress(query.from_user.id)
+        # Сохраняем прогресс вместо очистки
+        await save_progress(data, query.from_user.id)
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="❌ Критическая ошибка. Начните заново с /start."
+            text="❌ Произошла ошибка. Продолжите ввод причины."
         )
 
 async def save_best_video(user_id: int, theme: str, video_id: str):
     """Сохраняет выбор лучшего видео в БД"""
     async with aiosqlite.connect(DB_NAME) as db:
         await db.execute(
-            "INSERT INTO best_videos (user_id, theme, video_id) VALUES (?, ?, ?)",
+            "INSERT OR REPLACE INTO best_videos (user_id, theme, video_id) VALUES (?, ?, ?)",
             (user_id, theme, video_id)
         )
         await db.commit()
@@ -555,7 +565,11 @@ async def handle_best_reason_message(update: Update, context: CallbackContext) -
 
         except Exception as e:
             logger.error(f"Ошибка сохранения причины: {e}")
-            await update.message.reply_text("❌ Ошибка. Попробуйте снова.")
+            # Сохраняем прогресс и предлагаем продолжить
+            await save_progress(data, user_id)
+            await update.message.reply_text(
+                "❌ Ошибка. Пожалуйста, введите причину заново."
+            )
 
 
 async def save_best_reason(user_id: int, theme: str, reason: str):
@@ -631,6 +645,7 @@ def handle_shutdown(signum, loop, application):
     """Обработчик сигналов завершения"""
     logger.info(f"Received signal {signum}. Shutting down...")
     loop.create_task(shutdown(application))
+
 
 async def main():
     """Запуск бота."""
