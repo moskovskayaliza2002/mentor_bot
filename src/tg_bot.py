@@ -19,10 +19,9 @@ from telegram.ext import (
     CallbackContext
 )
 # тестировочный тег видео: BAACAgIAAxkBAAMDZ9wPRzeP1WZuKtSvvUWdHajDfKgAAgpnAALm0-hKoF7kuBm7AAH4NgQ
-nest_asyncio.apply()  # <== добавить в начале
-# Настройка логов
+nest_asyncio.apply()
 
-BASE_DIR = Path(__file__).resolve().parent.parent  # Поднимаемся на уровень выше из src/
+BASE_DIR = Path(__file__).resolve().parent.parent
 TOKEN_PATH = BASE_DIR / "token" / "config.txt"
 DB_PATH = BASE_DIR / "data" / "ratings.db"
 LOG_DIR = BASE_DIR / "logs"
@@ -56,34 +55,34 @@ except Exception as e:
 
 DB_NAME = str(DB_PATH)  # Для совместимости с aiosqlite
 
-# Человеко-читаемые названия (пример)
+# Человеко-читаемые названия
 VIDEO_NAMES = {
-    "BAACAgIAAxkBAAICd2fu0op2FHJKi1m7QGpVVdvKWTDRAAJWdwACZQl5S_llkb0_CmGJNgQ": "Робототехника - Человеческий",
-    "BAACAgIAAxkBAAICeWfu0viUdwFlNZzSdae69xGgI90uAAJgdwACZQl5SwF6kl6EP6sXNgQ": "Робототехника - Сгенерированный",
-    "BAACAgIAAxkBAAICe2fu0zeZAhxuI3k-VGGRhhtQY0ZgAAJkdwACZQl5S1sLnwKesL77NgQ": "Робототехника - Сгенерированный+",
-    "BAACAgIAAxkBAAICfWfu03duP7DAGcwrN3cCOqOF7dqfAAJqdwACZQl5S88OE6dAP5I9NgQ": "Кто живет в Антарктиде? - Человеческий",
-    "BAACAgIAAxkBAAICf2fu1BYe1Vw3VoUdOcRpNDwg7I9sAAJ3dwACZQl5S3o5xoU0FVwbNgQ": "Кто живет в Антарктиде? - Сгенерированный",
-    "BAACAgIAAxkBAAICgWfu1FtO9Octp6vsrYBV5yfJL-DjAAJ-dwACZQl5S59QIpq9JsPXNgQ": "Кто живет в Антарктиде? - Сгенерированный+",
-    "BAACAgIAAxkBAAICg2fu1J12-JorEkz5B7qVXPkP8BOJAAKLdwACZQl5S4nTlKsAAUvKITYE": "Кто побывал в космосе? - Человеческий",
-    "BAACAgIAAxkBAAIChWfu1NOaYhKlhXIGArjXcN0a1eMcAAKYdwACZQl5S_CivLrQ9MOwNgQ": "Кто побывал в космосе? - Сгенерированный",
-    "BAACAgIAAxkBAAICh2fu1RjzLDI9OeIQ7elA2L6oEAK9AAKpdwACZQl5S2cPjv9IVz8cNgQ": "Кто побывал в космосе? - Сгенерированный+"
+    "BAACAgIAAxkBAAIJhGf6hWz6Tf4UzrfUzQzVmA4uQEaBAAK9bwACrIbQS4ODBoPbU0kWNgQ": "Робототехника - Человеческий",
+    "BAACAgIAAxkBAAIJhmf6hYP7qB-f2nuwvg9FDaGofHMzAAK-bwACrIbQS7U72c2RicaGNgQ": "Робототехника - Сгенерированный",
+    "BAACAgIAAxkBAAIJiGf6hY39rfGimXYyxRrFFI7-YJTaAAK_bwACrIbQS7UX2rFb1Sp3NgQ": "Робототехника - Сгенерированный+",
+    "BAACAgIAAxkBAAIJimf6hagbHeQgOb_EEZYz00u72p4pAALBbwACrIbQSzP-35GDsrVfNgQ": "Кто живет в Антарктиде? - Человеческий",
+    "BAACAgIAAxkBAAIJjGf6hbx_L4QTiT1LIl5gL62GyhS0AALEbwACrIbQS7OJU7yemkUJNgQ": "Кто живет в Антарктиде? - Сгенерированный",
+    "BAACAgIAAxkBAAIJlmf6h_aTQQ7T2CUF99_Yl0nW1wmgAAL3bwACrIbQS6IJn7l8ajYgNgQ": "Кто живет в Антарктиде? - Сгенерированный+",
+    "BAACAgIAAxkBAAIJkGf6hd4QqdiDb9CzNVCWT7iGtQ9jAALIbwACrIbQS7_QaCaZeO7PNgQ": "Кто побывал в космосе? - Человеческий",
+    "BAACAgIAAxkBAAIJkmf6hfQzUpF2V5fcvG5zfv--99IOAALKbwACrIbQS50Y8yKJKRujNgQ": "Кто побывал в космосе? - Сгенерированный",
+    "BAACAgIAAxkBAAIJlGf6hgW5MCA1OC_pf7cxjCac4JRdAALLbwACrIbQS0TChyBosMQLNgQ": "Кто побывал в космосе? - Сгенерированный+"
 }
 
 THEMES = {
     "Робототехника": [
-        "BAACAgIAAxkBAAICd2fu0op2FHJKi1m7QGpVVdvKWTDRAAJWdwACZQl5S_llkb0_CmGJNgQ",
-        "BAACAgIAAxkBAAICeWfu0viUdwFlNZzSdae69xGgI90uAAJgdwACZQl5SwF6kl6EP6sXNgQ",
-        "BAACAgIAAxkBAAICe2fu0zeZAhxuI3k-VGGRhhtQY0ZgAAJkdwACZQl5S1sLnwKesL77NgQ"
+        "BAACAgIAAxkBAAIJhGf6hWz6Tf4UzrfUzQzVmA4uQEaBAAK9bwACrIbQS4ODBoPbU0kWNgQ",
+        "BAACAgIAAxkBAAIJhmf6hYP7qB-f2nuwvg9FDaGofHMzAAK-bwACrIbQS7U72c2RicaGNgQ",
+        "BAACAgIAAxkBAAIJiGf6hY39rfGimXYyxRrFFI7-YJTaAAK_bwACrIbQS7UX2rFb1Sp3NgQ"
     ],
     "Кто живет в Антарктиде?": [
-        "BAACAgIAAxkBAAICfWfu03duP7DAGcwrN3cCOqOF7dqfAAJqdwACZQl5S88OE6dAP5I9NgQ",
-        "BAACAgIAAxkBAAICf2fu1BYe1Vw3VoUdOcRpNDwg7I9sAAJ3dwACZQl5S3o5xoU0FVwbNgQ",
-        "BAACAgIAAxkBAAICgWfu1FtO9Octp6vsrYBV5yfJL-DjAAJ-dwACZQl5S59QIpq9JsPXNgQ"
+        "BAACAgIAAxkBAAIJimf6hagbHeQgOb_EEZYz00u72p4pAALBbwACrIbQSzP-35GDsrVfNgQ",
+        "BAACAgIAAxkBAAIJjGf6hbx_L4QTiT1LIl5gL62GyhS0AALEbwACrIbQS7OJU7yemkUJNgQ",
+        "BAACAgIAAxkBAAIJlmf6h_aTQQ7T2CUF99_Yl0nW1wmgAAL3bwACrIbQS6IJn7l8ajYgNgQ"
     ],
     "Кто побывал в космосе?": [
-        "BAACAgIAAxkBAAICg2fu1J12-JorEkz5B7qVXPkP8BOJAAKLdwACZQl5S4nTlKsAAUvKITYE",
-        "BAACAgIAAxkBAAIChWfu1NOaYhKlhXIGArjXcN0a1eMcAAKYdwACZQl5S_CivLrQ9MOwNgQ",
-        "BAACAgIAAxkBAAICh2fu1RjzLDI9OeIQ7elA2L6oEAK9AAKpdwACZQl5S2cPjv9IVz8cNgQ"
+        "BAACAgIAAxkBAAIJkGf6hd4QqdiDb9CzNVCWT7iGtQ9jAALIbwACrIbQS7_QaCaZeO7PNgQ",
+        "BAACAgIAAxkBAAIJkmf6hfQzUpF2V5fcvG5zfv--99IOAALKbwACrIbQS50Y8yKJKRujNgQ",
+        "BAACAgIAAxkBAAIJlGf6hgW5MCA1OC_pf7cxjCac4JRdAALLbwACrIbQS0TChyBosMQLNgQ"
     ]
 }
 
@@ -137,6 +136,7 @@ async def init_db():
                           criterion TEXT,
                           score INTEGER)''')
         await db.commit()
+
 
 async def start(update: Update, context: CallbackContext) -> None:
     """Обработчик команды /start."""
@@ -252,7 +252,7 @@ async def ask_criterion(update: Update, context: CallbackContext) -> None:
     hint_text = CRITERIA_HINTS[c_idx]
     keyboard = [
         [
-            InlineKeyboardButton(str(i), callback_data=f"rating-{i}")
+            InlineKeyboardButton(f"{i}", callback_data=f"rating-{i}") 
             for i in range(1, 6)
         ]
     ]

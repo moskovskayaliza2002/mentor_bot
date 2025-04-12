@@ -3,35 +3,41 @@
 Сам бот находится тут: @mentorrating_bot
 ## Структура проекта
 ```bash
-mentor_tester
+mentor_bot
 ├── src/
 │ ├── tg_bot.py # Основной скрипт бота
 │ └── read_db.py # Скрипт для экспорта данных
 ├── data/
 │ ├── ratings.db # База данных (создается автоматически)
-│ └── results.xlsx # Результаты (создается скриптом)
+│ └── results.xlsx # Результаты (создается скриптом read_db.py)
 ├── token/
 │ └── config.txt # Файл с токеном бота
-├── logs/ # Директория для логов
+├── logs/ # Директория для логов (создается автоматически )
 ├── requirements.txt # Зависимости
 └── README.md
 ```
 
 ## Установка
 1. Клонируйте репозиторий
+```bash
+git clone https://github.com/moskovskayaliza2002/mentor_bot.git
+```
 2. Установите зависимости:
 ```bash
 pip install -r requirements.txt
 ```
+3. Вставьте в дирректорию *token* файл *config.txt* с токеном вашего бота (получить можно от @BotFather)
+
+Остальные директории и файлы создадутся автоматически при запуске
 ## Запуск скриптов
 ### Запуск бота (tg_bot.py)
 Из дирректории проекта:
 ```bash
-python src/tg_bot.py
+python3 src/tg_bot.py
 ```
 ### Экспорт данных (read_db.py)
 ```bash
-python src/read_db.py
+python3 src/read_db.py
 ```
 Результат:
 Файл data/results.xlsx с 3 листами:
@@ -51,5 +57,5 @@ python src/read_db.py
 ## Автоматизация
 Для работы в фоновом режиме на Linux:
 ```
-nohup python src/tg_bot.py > bot.log 2>&1 &
+nohup python3 src/tg_bot.py > bot.log 2>&1 &
 ```
